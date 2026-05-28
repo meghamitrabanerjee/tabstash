@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TabStash — Log In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:        #0D0D0D;
+      --ink-2:      #3A3A3A;
+      --ink-3:      #7A7A7A;
+      --ink-4:      #ADADAD;
+      --bg:         #F5F3EE;
+      --bg-2:       #EDEAE3;
+      --bg-3:       #DDDAD2;
+      --white:      #FFFFFF;
+      --accent:     #2A5EFF;
+      --accent-2:   #FF4757;
+      --accent-dim: #D6E0FF;
+      --success:    #1A9E5C;
+      --r-sm:   6px;
+      --r-md:   12px;
+      --r-lg:   20px;
+      --r-xl:   32px;
+      --r-pill: 100px;
+      --ff-display: 'Instrument Serif', Georgia, serif;
+      --ff-body:    'Geist', system-ui, sans-serif;
+      --shadow-sm: 0 1px 4px rgba(0,0,0,0.07);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.09);
+      --shadow-lg: 0 16px 48px rgba(0,0,0,0.12);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--ff-body);
+      -webkit-font-smoothing: antialiased;
+      color: var(--ink);
+      line-height: 1.6;
+    }
+
+    body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 100vh;
+    }
+
+    *:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: var(--r-sm);
+    }
+
+    /* ══════════ LEFT PANEL ══════════ */
+    .left {
+      background: var(--ink);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2.5rem;
+      overflow: hidden;
+    }
+
+    /* Subtle ambient glows */
+    .left::before {
+      content: '';
+      position: absolute;
+      top: -80px; right: -80px;
+      width: 360px; height: 360px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(42,94,255,0.14) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .left::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; left: -60px;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,71,87,0.09) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Logo */
+    .left-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; position: relative; z-index: 1;
+    }
+    .left-logo-mark {
+      width: 34px; height: 34px;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .left-logo:hover .left-logo-mark { background: var(--accent); }
+    .left-logo-mark svg { width: 16px; height: 16px; color: #fff; }
+    .left-logo span {
+      font-family: var(--ff-display);
+      font-size: 1.2rem; color: #fff;
+      letter-spacing: -0.01em;
+    }
+
+    /* Copy */
+    .left-body {
+      position: relative; z-index: 1;
+      flex: 1; display: flex; flex-direction: column;
+      justify-content: center; padding: 2rem 0;
+    }
+    .left-eyebrow {
+      font-size: 0.72rem; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(42,94,255,0.7); margin-bottom: 1rem;
+    }
+    .left-heading {
+      font-family: var(--ff-display);
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      font-weight: 400; line-height: 1.05;
+      letter-spacing: -0.025em;
+      color: #fff; margin-bottom: 1.1rem;
+    }
+    .left-heading em { font-style: italic; color: var(--accent); }
+    .left-sub {
+      font-size: 0.875rem; font-weight: 300;
+      color: rgba(255,255,255,0.4); line-height: 1.75;
+      max-width: 300px; margin-bottom: 2.75rem;
+    }
+
+    /* Saved link preview cards */
+    .preview-cards { display: flex; flex-direction: column; gap: 5px; }
+.preview-card {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--r-md); padding: 0.55rem 1rem;
+  transition: background 0.2s;
+}
+    .preview-card:hover { background: rgba(255,255,255,0.08); }
+    .preview-thumb {
+      width: 36px; height: 36px; border-radius: 8px;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    }
+    .preview-thumb.c1 { background: rgba(42,94,255,0.2); }
+    .preview-thumb.c2 { background: rgba(255,71,87,0.18); }
+    .preview-thumb.c3 { background: rgba(26,158,92,0.18); }
+    .preview-thumb svg { width: 16px; height: 16px; }
+    .preview-thumb.c1 svg { color: #7BA3FF; }
+    .preview-thumb.c2 svg { color: #FF7F8C; }
+    .preview-thumb.c3 svg { color: #3DD68C; }
+    .preview-info { flex: 1; min-width: 0; }
+    .preview-title {
+      font-size: 0.78rem; font-weight: 500;
+      color: rgba(255,255,255,0.65);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .preview-url {
+      font-size: 0.68rem; color: rgba(255,255,255,0.22);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .left-footer {
+      position: relative; z-index: 1;
+      font-size: 0.74rem; color: rgba(255,255,255,0.18);
+    }
+
+    /* ══════════ RIGHT PANEL ══════════ */
+    .right {
+      background: var(--white);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .form-box {
+      width: 100%; max-width: 400px;
+      opacity: 0; transform: translateY(18px);
+      animation: fadeUp 0.5s 0.1s ease forwards;
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-heading {
+      font-family: var(--ff-display);
+      font-size: 1.75rem; font-weight: 400;
+      color: var(--ink); letter-spacing: -0.025em;
+      margin-bottom: 0.3rem;
+    }
+    .form-sub {
+      font-size: 0.875rem; font-weight: 300;
+      color: var(--ink-3); margin-bottom: 2.25rem;
+    }
+
+    /* Form fields */
+    .field { margin-bottom: 1.1rem; }
+    .field-label {
+      display: block;
+      font-size: 0.72rem; font-weight: 500;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      color: var(--ink-3); margin-bottom: 0.45rem;
+      transition: color 0.2s;
+    }
+    .field:focus-within .field-label { color: var(--accent); }
+
+    .input-wrap { position: relative; }
+    .input-icon {
+      position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+      width: 15px; height: 15px; color: var(--ink-4);
+      pointer-events: none; transition: color 0.2s;
+    }
+    .field:focus-within .input-icon { color: var(--accent); }
+
+    .field-input {
+      width: 100%;
+      padding: 0.75rem 0.875rem 0.75rem 2.4rem;
+      font-family: var(--ff-body); font-size: 0.9rem; font-weight: 400;
+      color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--bg-3);
+      border-radius: var(--r-md);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      -webkit-appearance: none;
+    }
+    .field-input::placeholder { color: var(--ink-4); }
+    .field-input:focus {
+      background: var(--white);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(42,94,255,0.1);
+    }
+
+    /* Password toggle */
+    .pw-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--ink-4); padding: 4px;
+      display: flex; align-items: center;
+      transition: color 0.2s; border-radius: 4px;
+    }
+    .pw-toggle:hover { color: var(--ink-2); }
+    .pw-toggle svg { width: 15px; height: 15px; }
+    #loginPassword { padding-right: 2.6rem; }
+
+    /* Submit button */
+    .btn-submit {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; margin-top: 1.5rem;
+      padding: 0.875rem 1.5rem;
+      font-family: var(--ff-body); font-size: 0.9rem; font-weight: 500;
+      color: var(--bg); background: var(--ink);
+      border: none; border-radius: var(--r-pill);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: var(--shadow-md);
+    }
+    .btn-submit svg { width: 15px; height: 15px; transition: transform 0.2s; }
+    .btn-submit:hover { background: var(--accent); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+    .btn-submit:hover svg { transform: translateX(3px); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+    .divider-line { flex: 1; height: 1px; background: var(--bg-3); }
+    .divider-text { font-size: 0.74rem; color: var(--ink-4); font-weight: 400; }
+
+    /* Footer link */
+    .form-footer {
+      text-align: center; font-size: 0.85rem; color: var(--ink-3);
+    }
+    .form-footer a {
+      color: var(--accent); text-decoration: none; font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    .form-footer a:hover { opacity: 0.75; }
+
+    /* Status message */
+    #loginMessage {
+      display: none; text-align: center;
+      font-size: 0.82rem; font-weight: 500;
+      margin-top: 1rem; padding: 0.65rem 1rem;
+      border-radius: var(--r-md);
+    }
+    #loginMessage.success {
+      display: block;
+      background: #EDFBF4; color: var(--success);
+      border: 1px solid #B0EDD0;
+    }
+    #loginMessage.error {
+      display: block;
+      background: #FFF1F2; color: var(--accent-2);
+      border: 1px solid #FECDD3;
+    }
+
+    /* Responsive */
+    @media (max-width: 760px) {
+      body { grid-template-columns: 1fr; }
+      .left { display: none; }
+      .right { background: var(--bg); padding: 3rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEFT PANEL -->
+  <div class="left">
+    <a href="index.html" class="left-logo">
+      <div class="left-logo-mark">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+        </svg>
+      </div>
+      <span>TabStash</span>
+    </a>
+
+    <div class="left-body">
+      <div class="left-eyebrow">Welcome back</div>
+      <h1 class="left-heading">
+        Your stash<br>is <em>waiting</em><br>for you.
+      </h1>
+      <p class="left-sub">Everything you saved is right where you left it — organised, visual, and ready to dive back into.</p>
+
+      <div class="preview-cards">
+        <div class="preview-card">
+          <div class="preview-thumb c1">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+          </div>
+          <div class="preview-info">
+            <div class="preview-title">The Art of Deep Work — Full Talk</div>
+            <div class="preview-url">youtube.com/watch?v=...</div>
+          </div>
+        </div>
+        <div class="preview-card">
+          <div class="preview-thumb c2">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <div class="preview-info">
+            <div class="preview-title">FastAPI Best Practices 2025</div>
+            <div class="preview-url">dev.to/article/fastapi...</div>
+          </div>
+        </div>
+       
+      </div>
+    </div>
+
+    <div class="left-footer">© 2026 TabStash · Portfolio project</div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right">
+    <div class="form-box">
+      <h2 class="form-heading">Log in</h2>
+      <p class="form-sub">Welcome back. Your stash missed you.</p>
+
+      <form id="loginForm" novalidate>
+
+        <div class="field">
+          <label class="field-label" for="loginUsername">Username</label>
+          <div class="input-wrap">
+            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <input type="text" id="loginUsername" class="field-input" placeholder="Your username" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="loginPassword">Password</label>
+          <div class="input-wrap">
+            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <input type="password" id="loginPassword" class="field-input" placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" class="pw-toggle" id="pwToggle" aria-label="Toggle password visibility">
+              <svg id="eyeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          Unlock my stash
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+          </svg>
+        </button>
+      </form>
+
+      <p id="loginMessage"></p>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">new here?</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <p class="form-footer">
+        <a href="register.html">Create a free account →</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Password toggle
+    document.getElementById('pwToggle').addEventListener('click', () => {
+      const input = document.getElementById('loginPassword');
+      const icon  = document.getElementById('eyeIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>';
+      } else {
+        input.type = 'password';
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+      }
+    });
+
+    // Login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const msgEl    = document.getElementById('loginMessage');
+      const btn      = document.getElementById('submitBtn');
+
+      // --- THE BOUNCER: Check for empty fields ---
+      if (!username || !password) {
+        msgEl.textContent = 'Please enter both username and password.';
+        msgEl.className = 'error';
+        return; 
+      }
+
+      btn.innerHTML = 'Logging in…';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('http://127.0.0.1:8000/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('tabstash_token', data.access_token);
+          localStorage.setItem('tabstash_name', data.display_name);
+          msgEl.textContent = '✓ Access granted. Opening your stash…';
+          msgEl.className = 'success';
+          setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+        } else {
+          msgEl.textContent = data.detail || 'Invalid username or password.';
+          msgEl.className = 'error';
+          btn.innerHTML = 'Unlock my stash <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        msgEl.textContent = 'Cannot connect to server. Is the backend running?';
+        msgEl.className = 'error';
+        btn.innerHTML = 'Unlock my stash <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

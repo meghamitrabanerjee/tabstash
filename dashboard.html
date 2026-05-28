@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TabStash — My Stash</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─── RESET ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    /* ─── TOKENS ─── */
+    :root {
+      --ink:        #0D0D0D;
+      --ink-2:      #3A3A3A;
+      --ink-3:      #7A7A7A;
+      --ink-4:      #ADADAD;
+      --bg:         #F5F3EE;
+      --bg-2:       #EDEAE3;
+      --bg-3:       #DDDAD2;
+      --white:      #FFFFFF;
+      --accent:     #2A5EFF;
+      --accent-2:   #FF4757;
+      --accent-dim: #D6E0FF;
+      --success:    #1A9E5C;
+      --r-sm: 6px; --r-md: 12px; --r-lg: 20px; --r-xl: 32px; --r-pill: 100px;
+      --ff-display: 'Instrument Serif', Georgia, serif;
+      --ff-body:    'Geist', system-ui, sans-serif;
+      --shadow-sm: 0 1px 4px rgba(0,0,0,0.07);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.09);
+      --shadow-lg: 0 16px 48px rgba(0,0,0,0.12);
+    }
+
+    body {
+      font-family: var(--ff-body);
+      background: var(--bg);
+      color: var(--ink);
+      overflow-x: hidden;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    *:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--r-sm); }
+
+    /* ══ NAV ══ */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(245,243,238,0.92);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--bg-3);
+    }
+    .nav-inner {
+      max-width: 1160px; margin: 0 auto;
+      padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; flex-shrink: 0;
+    }
+    .logo-mark {
+      width: 32px; height: 32px; background: var(--ink); border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center; transition: background 0.25s;
+    }
+    .logo:hover .logo-mark { background: var(--accent); }
+    .logo-mark svg { width: 16px; height: 16px; color: var(--white); }
+    .logo-name { font-family: var(--ff-display); font-size: 1.2rem; color: var(--ink); letter-spacing: -0.01em; }
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+    .nav-welcome { font-size: 0.8rem; color: var(--ink-3); }
+    .btn-danger {
+      font-family: var(--ff-body); font-size: 0.825rem; font-weight: 500;
+      color: #fff; background: var(--accent-2); border: none;
+      padding: 0.45rem 1rem; border-radius: var(--r-pill);
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-danger:hover { opacity: 0.85; }
+
+    /* ══ LAYOUT ══ */
+    .page-layout {
+      max-width: 1160px; margin: 0 auto;
+      padding: 2.5rem 2rem 5rem;
+      display: grid; grid-template-columns: 220px 1fr;
+      gap: 2.5rem; align-items: start;
+    }
+    @media (max-width: 800px) {
+      .page-layout { grid-template-columns: 1fr; padding: 1.5rem 1.25rem 4rem; }
+    }
+
+    /* ══ SIDEBAR ══ */
+    .sidebar { position: sticky; top: 80px; }
+    @media (max-width: 800px) { .sidebar { position: static; } }
+
+    .sidebar-card {
+      background: var(--white); border: 1px solid var(--bg-3);
+      border-radius: var(--r-xl); box-shadow: var(--shadow-sm);
+    }
+    .sidebar-header {
+      padding: 1.1rem 1.25rem 0.9rem; border-bottom: 1px solid var(--bg-3);
+    }
+    .sidebar-label {
+      font-size: 0.68rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-4);
+    }
+    .folder-list { list-style: none; padding: 0.5rem; }
+    .folder-divider { height: 1px; background: var(--bg-3); margin: 0.25rem 0.75rem; }
+
+    /* ── folder item: wraps button so hover CSS works cleanly ── */
+    .folder-item { position: relative; }
+
+    /* shared row style — used for both All Tabs button and folder divs */
+    .folder-row {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; padding: 0.55rem 0.75rem;
+      border-radius: var(--r-md);
+      font-family: var(--ff-body); font-size: 0.825rem; font-weight: 400;
+      color: var(--ink-3); background: none; border: none; cursor: pointer;
+      text-align: left; transition: background 0.15s, color 0.15s;
+      /* FIX: removed inline onclick — all events wired in JS */
+    }
+    .folder-row:hover { background: var(--bg-2); color: var(--ink); }
+    .folder-row.active { background: var(--accent-dim); color: var(--accent); font-weight: 500; }
+
+    .folder-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .folder-left span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .folder-icon { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* FIX: hover-reveal delete — scoped to .folder-item hover so it works on the div too */
+    .folder-del {
+      background: none; border: none; cursor: pointer;
+      color: var(--ink-4); padding: 3px; border-radius: 4px;
+      opacity: 0; transition: opacity 0.15s, color 0.15s, background 0.15s;
+      line-height: 0; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    }
+    .folder-del svg { width: 13px; height: 13px; }
+    .folder-item:hover .folder-del { opacity: 1; }
+    .folder-del:hover { color: var(--accent-2); }
+    /* FIX: delete button visible on active (blue) row */
+    .folder-row.active .folder-del { color: var(--accent); }
+    .folder-row.active .folder-del:hover { color: var(--accent-2); }
+
+    /* ── add-folder form ── */
+    .add-folder-form {
+      padding: 0.75rem 1rem 1rem; border-top: 1px solid var(--bg-3);
+      display: flex; flex-direction: row; align-items: center; gap: 8px;
+    }
+    .add-folder-input {
+      flex: 1; min-width: 0; /* min-width:0 prevents flex overflow */
+      font-family: var(--ff-body); font-size: 0.8rem; color: var(--ink);
+      background: var(--bg-2); border: 1px solid var(--bg-3);
+      border-radius: var(--r-md); padding: 0 0.75rem;
+      outline: none; transition: border-color 0.2s;
+      height: 36px; line-height: 36px; display: block;
+    }
+    .add-folder-input::placeholder { color: var(--ink-4); }
+    .add-folder-input:focus { border-color: var(--accent); background: var(--white); }
+    .add-folder-btn {
+      background: var(--ink); color: var(--white); border: none; cursor: pointer;
+      width: 36px; height: 36px; min-width: 36px; flex-shrink: 0;
+      border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .add-folder-btn:hover { background: var(--accent); }
+    .add-folder-btn svg { width: 14px; height: 14px; }
+
+    /* ══ STASH BAR ══ */
+    .stash-bar {
+      background: var(--white); border: 1px solid var(--bg-3);
+      border-radius: var(--r-xl); padding: 0.75rem;
+      margin-bottom: 0.75rem; box-shadow: var(--shadow-sm); /* FIX: reduced bottom margin, status msg sits below */
+    }
+    .stash-inputs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .stash-url-input {
+      flex: 1; min-width: 180px;
+      font-family: var(--ff-body); font-size: 0.875rem; color: var(--ink);
+      background: var(--bg); border: 1px solid var(--bg-3);
+      border-radius: var(--r-lg); padding: 0.7rem 1rem;
+      outline: none; transition: border-color 0.2s, background 0.2s;
+    }
+    .stash-url-input::placeholder { color: var(--ink-4); }
+    .stash-url-input:focus { border-color: var(--accent); background: var(--white); }
+    .folder-select {
+      font-family: var(--ff-body); font-size: 0.825rem; color: var(--ink-3);
+      background: var(--bg); border: 1px solid var(--bg-3);
+      border-radius: var(--r-lg); padding: 0.7rem 0.9rem;
+      outline: none; cursor: pointer; transition: border-color 0.2s;
+    }
+    .folder-select:focus { border-color: var(--accent); }
+    .stash-btn {
+      font-family: var(--ff-body); font-size: 0.875rem; font-weight: 500;
+      color: var(--bg); background: var(--ink); border: none; cursor: pointer;
+      padding: 0.7rem 1.5rem; border-radius: var(--r-lg);
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .stash-btn:hover { background: var(--accent); }
+    .stash-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* FIX: status message lives outside the white card so it doesn't add phantom height */
+    .status-msg {
+      font-size: 0.78rem; font-weight: 500;
+      padding: 0.35rem 0.25rem;
+      min-height: 1.5rem; /* keeps layout stable without pushing card height */
+      margin-bottom: 1.25rem;
+    }
+    .status-msg.ok  { color: var(--success); }
+    .status-msg.err { color: var(--accent-2); }
+
+    /* ══ VIEW HEADER ══ */
+    .view-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 1rem; margin-bottom: 1.75rem;
+      padding-bottom: 1.25rem; border-bottom: 1px solid var(--bg-3);
+    }
+    .view-title {
+      font-family: var(--ff-display); font-size: 2rem; font-weight: 400;
+      letter-spacing: -0.02em; color: var(--ink); line-height: 1;
+    }
+    .view-count { font-size: 0.8rem; color: var(--ink-4); margin-top: 4px; }
+    .clear-btn {
+      font-family: var(--ff-body); font-size: 0.78rem; font-weight: 500;
+      color: var(--accent-2); background: none; border: 1px solid #FFD6D9;
+      padding: 0.45rem 0.9rem; border-radius: var(--r-pill); cursor: pointer;
+      transition: all 0.2s; flex-shrink: 0;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .clear-btn:hover { background: #FFD6D9; }
+    .clear-btn svg { width: 12px; height: 12px; }
+
+    /* ══ TABS GRID ══ */
+    .tabs-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    }
+    @media (max-width: 1060px) { .tabs-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 600px)  { .tabs-grid { grid-template-columns: 1fr; } }
+
+    /* ── tab card ── */
+    .tab-card {
+      background: var(--white); border: 1px solid var(--bg-3);
+      border-radius: var(--r-lg); overflow: hidden; cursor: pointer;
+      position: relative;
+      transition: box-shadow 0.25s, transform 0.25s;
+      opacity: 0; animation: fadeUp 0.45s ease forwards;
+    }
+    .tab-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+    .tab-thumb {
+      height: 130px; overflow: hidden;
+      background: var(--bg-2); border-bottom: 1px solid var(--bg-3);
+      /* FIX: removed pointer-events:none — was causing hover propagation bugs in Firefox */
+    }
+    .tab-thumb img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.4s ease; pointer-events: none; /* only img is non-interactive, not the container */
+    }
+    .tab-card:hover .tab-thumb img { transform: scale(1.04); }
+    .tab-thumb-fallback {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .tab-thumb-fallback svg { width: 26px; height: 26px; color: var(--ink-4); }
+
+    .tab-info { padding: 0.85rem 0.9rem 1rem; pointer-events: none; }
+    .tab-domain { font-size: 0.65rem; color: var(--ink-4); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tab-title {
+      font-size: 0.78rem; font-weight: 500; color: var(--ink); line-height: 1.45;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      transition: color 0.2s;
+    }
+    .tab-card:hover .tab-title { color: var(--accent); }
+
+    /* ── delete btn on card ── */
+    .tab-del {
+      position: absolute; top: 8px; right: 8px; z-index: 2;
+      background: rgba(255,255,255,0.92); border: none; cursor: pointer;
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--ink-3);
+      /* FIX: always visible on mobile (no hover state), fades on desktop */
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s, color 0.2s;
+      backdrop-filter: blur(4px); box-shadow: var(--shadow-sm);
+    }
+    .tab-del svg { width: 13px; height: 13px; pointer-events: none; }
+    .tab-card:hover .tab-del { opacity: 1; }
+    .tab-del:hover { background: var(--accent-2); color: #fff; }
+    /* FIX: always show delete on touch devices */
+    @media (hover: none) { .tab-del { opacity: 0.7; } }
+
+    /* ── empty state ── */
+    .empty-state {
+      grid-column: 1 / -1; padding: 4rem 2rem; text-align: center;
+      background: var(--white); border: 1px dashed var(--bg-3); border-radius: var(--r-xl);
+    }
+    .empty-icon {
+      width: 48px; height: 48px; margin: 0 auto 1rem;
+      background: var(--bg-2); border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .empty-icon svg { width: 24px; height: 24px; color: var(--ink-4); }
+    .empty-title { font-family: var(--ff-display); font-size: 1.3rem; color: var(--ink); margin-bottom: 0.5rem; }
+    .empty-sub { font-size: 0.85rem; color: var(--ink-3); font-weight: 300; }
+
+    /* ══ MODAL ══ */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(13,13,13,0.45);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal-card {
+      background: var(--white); border: 1px solid var(--bg-3);
+      border-radius: var(--r-xl); padding: 2rem;
+      max-width: 400px; width: 100%; box-shadow: var(--shadow-lg);
+      transform: translateY(12px) scale(0.98); transition: transform 0.25s;
+    }
+    .modal-overlay.show .modal-card { transform: translateY(0) scale(1); }
+    .modal-icon {
+      width: 40px; height: 40px; background: #FFD6D9; border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;
+    }
+    .modal-icon svg { width: 20px; height: 20px; color: var(--accent-2); }
+    .modal-title { font-family: var(--ff-display); font-size: 1.3rem; color: var(--ink); margin-bottom: 0.4rem; }
+    .modal-msg { font-size: 0.875rem; font-weight: 300; color: var(--ink-2); line-height: 1.7; margin-bottom: 1.5rem; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal-cancel {
+      font-family: var(--ff-body); font-size: 0.85rem; font-weight: 400;
+      color: var(--ink-2); background: var(--bg-2); border: 1px solid var(--bg-3);
+      padding: 0.55rem 1.1rem; border-radius: var(--r-pill); cursor: pointer; transition: all 0.2s;
+    }
+    .modal-cancel:hover { border-color: var(--ink-4); }
+    .modal-confirm {
+      font-family: var(--ff-body); font-size: 0.85rem; font-weight: 500;
+      color: #fff; background: var(--accent-2); border: none;
+      padding: 0.55rem 1.25rem; border-radius: var(--r-pill); cursor: pointer; transition: opacity 0.2s;
+    }
+    .modal-confirm:hover { opacity: 0.85; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav aria-label="Main navigation">
+  <div class="nav-inner">
+    <a class="logo" href="index.html" aria-label="TabStash home">
+      <div class="logo-mark" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+        </svg>
+      </div>
+      <span class="logo-name">TabStash</span>
+    </a>
+    <div class="nav-right">
+      <span class="nav-welcome" id="nav-welcome"></span>
+      <button id="logoutBtn" class="btn-danger">Log out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ PAGE ══ -->
+<div class="page-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" aria-label="Folders">
+    <div class="sidebar-card">
+      <div class="sidebar-header">
+        <div class="sidebar-label">Folders</div>
+      </div>
+      <ul class="folder-list" id="folderList" role="list"></ul>
+      <form class="add-folder-form" id="categoryForm">
+        <input type="text" id="catInput" class="add-folder-input" placeholder="New folder…" required autocomplete="off">
+        <button type="submit" class="add-folder-btn" aria-label="Add folder">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main>
+    <!-- Stash bar -->
+    <div class="stash-bar">
+      <form id="stashForm">
+        <div class="stash-inputs">
+          <input type="url" id="urlInput" class="stash-url-input" placeholder="Paste a URL to stash…" required autocomplete="off">
+          <select id="folderSelect" class="folder-select" aria-label="Choose folder">
+            <option value="">No folder</option>
+          </select>
+          <button type="submit" id="stashBtn" class="stash-btn">Stash it</button>
+        </div>
+      </form>
+    </div>
+    <!-- FIX: status msg lives outside white card so it doesn't push card height -->
+    <div class="status-msg" id="statusMsg" aria-live="polite"></div>
+
+    <!-- View header -->
+    <div class="view-header">
+      <div>
+        <h1 class="view-title" id="viewTitle">All tabs</h1>
+        <div class="view-count" id="viewCount">0 saved links</div>
+      </div>
+      <button class="clear-btn" id="clearBtn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        Clear view
+      </button>
+    </div>
+
+    <!-- Grid -->
+    <div class="tabs-grid" id="tabsGrid"></div>
+  </main>
+</div>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card">
+    <div class="modal-icon" aria-hidden="true">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+    </div>
+    <div class="modal-title" id="modalTitle">Confirm</div>
+    <div class="modal-msg" id="modalMsg">Are you sure?</div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="modalCancel">Cancel</button>
+      <button class="modal-confirm" id="modalConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ══════════════════════════════════════
+     AUTH
+  ══════════════════════════════════════ */
+  const token = localStorage.getItem('tabstash_token');
+  const displayName = localStorage.getItem('tabstash_name');
+  if (!token) { window.location.href = 'login.html'; }
+  document.getElementById('nav-welcome').textContent = displayName ? `Hi, ${displayName} 👋` : '';
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+
+  /* ══════════════════════════════════════
+     STATE
+  ══════════════════════════════════════ */
+  let currentCategoryId = null;
+  let categoriesList = [];
+
+  /* ══════════════════════════════════════
+     INIT
+  ══════════════════════════════════════ */
+  async function initializeApp() {
+    await fetchCategories();
+    await fetchTabs();
+  }
+  initializeApp();
+
+  /* ══════════════════════════════════════
+     MODAL — promise-based, contextual title
+  ══════════════════════════════════════ */
+  function customConfirm(title, message) {
+    return new Promise(resolve => {
+      const overlay    = document.getElementById('modal');
+      const titleEl    = document.getElementById('modalTitle');
+      const msgEl      = document.getElementById('modalMsg');
+      const cancelBtn  = document.getElementById('modalCancel');
+      const confirmBtn = document.getElementById('modalConfirm');
+
+      // FIX: set both title and message for context
+      titleEl.textContent = title;
+      msgEl.textContent   = message;
+      overlay.classList.add('show');
+
+      const cleanup = result => {
+        overlay.classList.remove('show');
+        cancelBtn.removeEventListener('click', onCancel);
+        confirmBtn.removeEventListener('click', onConfirm);
+        // FIX: also close on overlay click (backdrop dismiss)
+        overlay.removeEventListener('click', onBackdrop);
+        resolve(result);
+      };
+      const onCancel   = () => cleanup(false);
+      const onConfirm  = () => cleanup(true);
+      // FIX: clicking outside the card dismisses (= cancel)
+      const onBackdrop = e => { if (e.target === overlay) cleanup(false); };
+
+      cancelBtn.addEventListener('click', onCancel);
+      confirmBtn.addEventListener('click', onConfirm);
+      overlay.addEventListener('click', onBackdrop);
+    });
+  }
+
+  /* ══════════════════════════════════════
+     CATEGORIES
+  ══════════════════════════════════════ */
+  async function fetchCategories() {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/categories', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.status === 401) return logout();
+      const data = await res.json();
+      categoriesList = data.categories;
+      renderFolderList();
+      renderFolderDropdown();
+    } catch (e) { console.error('fetchCategories', e); }
+  }
+
+  function renderFolderList() {
+    const allSVG = `<svg class="folder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>`;
+    const folderSVG = `<svg class="folder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>`;
+    const trashSVG  = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>`;
+
+    let html = `
+      <li class="folder-item">
+        <button class="folder-row ${currentCategoryId === null ? 'active' : ''}" data-id="all">
+          <span class="folder-left">${allSVG}<span>All tabs</span></span>
+        </button>
+      </li>`;
+
+    if (categoriesList.length) {
+      html += `<li><div class="folder-divider"></div></li>`;
+      categoriesList.forEach(cat => {
+        const active = currentCategoryId === cat.id ? 'active' : '';
+        html += `
+          <li class="folder-item">
+            <div class="folder-row ${active}" data-id="${cat.id}">
+              <span class="folder-left">${folderSVG}<span>${escapeHtml(cat.name)}</span></span>
+              <button class="folder-del" data-cat-id="${cat.id}" aria-label="Delete folder">${trashSVG}</button>
+            </div>
+          </li>`;
+      });
+    }
+
+    const list = document.getElementById('folderList');
+    list.innerHTML = html;
+
+    /* ── FIX: wire ALL folder interactions via JS — zero inline onclick ── */
+
+    // "All tabs" button
+    list.querySelector('[data-id="all"]').addEventListener('click', () => {
+      selectCategory(null, 'All tabs');
+    });
+
+    // Individual folder rows — click the row to navigate, but NOT if the delete btn was clicked
+    list.querySelectorAll('.folder-row[data-id]:not([data-id="all"])').forEach(row => {
+      row.addEventListener('click', e => {
+        // FIX: if the click landed on or inside the delete button, do nothing
+        if (e.target.closest('.folder-del')) return;
+        const id = parseInt(row.dataset.id);
+        const name = row.querySelector('.folder-left span').textContent;
+        selectCategory(id, name);
+      });
+    });
+
+    // Delete buttons — stopPropagation so the row click above never fires
+    list.querySelectorAll('.folder-del').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        deleteCategory(parseInt(btn.dataset.catId));
+      });
+    });
+  }
+
+  function renderFolderDropdown() {
+    const sel = document.getElementById('folderSelect');
+    // FIX: preserve current selection when re-rendering
+    const prevVal = sel.value;
+    let html = `<option value="">No folder</option>`;
+    categoriesList.forEach(cat => {
+      html += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
+    });
+    sel.innerHTML = html;
+    // Restore previous selection if still valid, else default to current folder
+    if (currentCategoryId && categoriesList.find(c => c.id === currentCategoryId)) {
+      sel.value = String(currentCategoryId);
+    } else if (prevVal && categoriesList.find(c => String(c.id) === prevVal)) {
+      sel.value = prevVal;
+    }
+  }
+
+  async function selectCategory(id, name) {
+    currentCategoryId = id;
+    document.getElementById('viewTitle').textContent = name;
+    renderFolderList();
+    renderFolderDropdown();
+    await fetchTabs();
+  }
+
+  document.getElementById('categoryForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const input = document.getElementById('catInput');
+    const name = input.value.trim();
+    if (!name) return;
+    try {
+      await fetch('http://127.0.0.1:8000/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name })
+      });
+      input.value = '';
+      await fetchCategories();
+    } catch (e) { console.error('createCategory', e); }
+  });
+
+  async function deleteCategory(id) {
+    const cat = categoriesList.find(c => c.id === id);
+    const name = cat ? `"${cat.name}"` : 'this folder';
+    const confirmed = await customConfirm(
+      'Delete folder',
+      `Delete ${name}? All tabs inside it will be permanently lost.`
+    );
+    if (!confirmed) return;
+    try {
+      await fetch(`http://127.0.0.1:8000/categories/${id}`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+      });
+      if (currentCategoryId === id) {
+        await selectCategory(null, 'All tabs');
+      } else {
+        await fetchCategories();
+        await fetchTabs(); // FIX: refresh grid to remove ghost tabs
+      }
+    } catch (e) { console.error('deleteCategory', e); }
+  }
+
+  /* ══════════════════════════════════════
+     TABS
+  ══════════════════════════════════════ */
+  async function fetchTabs() {
+    try {
+      const url = currentCategoryId
+        ? `http://127.0.0.1:8000/tabs?category_id=${currentCategoryId}`
+        : `http://127.0.0.1:8000/tabs`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      renderTabs(data.tabs);
+    } catch (e) { console.error('fetchTabs', e); }
+  }
+
+  function getDomain(url) {
+    try { return new URL(url).hostname.replace('www.', ''); } catch { return ''; }
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderTabs(tabs) {
+    const grid = document.getElementById('tabsGrid');
+    document.getElementById('viewCount').textContent = `${tabs.length} saved link${tabs.length !== 1 ? 's' : ''}`;
+    grid.innerHTML = '';
+
+    if (!tabs.length) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+            </svg>
+          </div>
+          <div class="empty-title">Nothing stashed yet</div>
+          <div class="empty-sub">Paste a URL above and close that tab — guilt-free.</div>
+        </div>`;
+      return;
+    }
+
+    tabs.forEach((tab, i) => {
+      const card = document.createElement('div');
+      card.className = 'tab-card';
+      card.style.animationDelay = `${i * 35}ms`;
+
+      // FIX: safe card click — guard against clicks on delete button
+      card.addEventListener('click', e => {
+        if (e.target.closest('.tab-del')) return;
+        window.open(tab.url, '_blank');
+      });
+
+      const fallbackSVG = `<div class="tab-thumb-fallback"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg></div>`;
+
+      const thumbHtml = tab.image_url
+        ? `<img src="${escapeHtml(tab.image_url)}" alt="" loading="lazy">`
+        : fallbackSVG;
+
+      card.innerHTML = `
+        <button class="tab-del" aria-label="Delete tab">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+        <div class="tab-thumb">${thumbHtml}</div>
+        <div class="tab-info">
+          <div class="tab-domain">${escapeHtml(getDomain(tab.url))}</div>
+          <div class="tab-title">${escapeHtml(tab.title || 'Untitled')}</div>
+        </div>`;
+
+      // FIX: image error fallback without inline onerror (avoids quote escaping bugs)
+      if (tab.image_url) {
+        const img = card.querySelector('img');
+        img.addEventListener('error', () => {
+          img.parentNode.innerHTML = fallbackSVG;
+        });
+      }
+
+      // FIX: delete wired via JS with stopPropagation
+      card.querySelector('.tab-del').addEventListener('click', async e => {
+        e.stopPropagation();
+        const confirmed = await customConfirm(
+          'Delete tab',
+          'Permanently delete this tab from your stash?'
+        );
+        if (!confirmed) return;
+        try {
+          const res = await fetch(`http://127.0.0.1:8000/tabs/${tab.id}`, {
+            method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) fetchTabs();
+        } catch (e) { console.error('deleteTab', e); }
+      });
+
+      grid.appendChild(card);
+    });
+  }
+
+  /* ══════════════════════════════════════
+     CLEAR STASH — context-aware
+  ══════════════════════════════════════ */
+  document.getElementById('clearBtn').addEventListener('click', async () => {
+    const isFolder = !!currentCategoryId;
+    const title = isFolder ? 'Clear folder' : 'Clear entire stash';
+    const msg   = isFolder
+      ? 'Clear all tabs in this folder? This cannot be undone.'
+      : 'Clear your entire stash? Every tab will be permanently deleted.';
+
+    const confirmed = await customConfirm(title, msg);
+    if (!confirmed) return;
+    try {
+      const url = currentCategoryId
+        ? `http://127.0.0.1:8000/tabs?category_id=${currentCategoryId}`
+        : `http://127.0.0.1:8000/tabs`;
+      const res = await fetch(url, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) fetchTabs();
+    } catch (e) { console.error('clearStash', e); }
+  });
+
+  /* ══════════════════════════════════════
+     STASH FORM
+  ══════════════════════════════════════ */
+  document.getElementById('stashForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const urlInput     = document.getElementById('urlInput');
+    const folderSelect = document.getElementById('folderSelect');
+    const btn          = document.getElementById('stashBtn');
+    const status       = document.getElementById('statusMsg');
+
+    btn.textContent = 'Scraping…';
+    btn.disabled = true;
+    status.textContent = '';
+    status.className = 'status-msg';
+
+    try {
+      const payload = { url: urlInput.value };
+      if (folderSelect.value) payload.category_id = parseInt(folderSelect.value);
+
+      const res = await fetch('http://127.0.0.1:8000/tabs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        urlInput.value = '';
+        status.textContent = '✓ Stashed successfully';
+        status.className = 'status-msg ok';
+        // FIX: if the user stashed into a folder they're not currently viewing, switch to it
+        if (folderSelect.value && parseInt(folderSelect.value) !== currentCategoryId) {
+          const cat = categoriesList.find(c => c.id === parseInt(folderSelect.value));
+          if (cat) await selectCategory(cat.id, cat.name);
+          else await fetchTabs();
+        } else {
+          await fetchTabs();
+        }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        status.textContent = err.detail || 'Failed to stash.';
+        status.className = 'status-msg err';
+      }
+    } catch (err) {
+      status.textContent = 'Server error. Is the backend running?';
+      status.className = 'status-msg err';
+    } finally {
+      btn.textContent = 'Stash it';
+      btn.disabled = false;
+      setTimeout(() => { status.textContent = ''; status.className = 'status-msg'; }, 4000);
+    }
+  });
+
+  /* ══════════════════════════════════════
+     LOGOUT
+  ══════════════════════════════════════ */
+  function logout() {
+    localStorage.removeItem('tabstash_token');
+    localStorage.removeItem('tabstash_name');
+    window.location.href = 'login.html';
+  }
+</script>
+</body>
+</html>

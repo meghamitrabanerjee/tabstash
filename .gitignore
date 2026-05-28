@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+tabstash.db
+.DS_Store
