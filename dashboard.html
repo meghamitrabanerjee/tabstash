@@ -507,7 +507,7 @@
   ══════════════════════════════════════ */
   async function fetchCategories() {
     try {
-      const res = await fetch('http://127.0.0.1:8000/categories', {
+      const res = await fetch('https://tabstash-api.onrender.com/categories', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.status === 401) return logout();
@@ -605,7 +605,7 @@
     const name = input.value.trim();
     if (!name) return;
     try {
-      await fetch('http://127.0.0.1:8000/categories', {
+      await fetch('https://tabstash-api.onrender.com/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name })
@@ -624,7 +624,7 @@
     );
     if (!confirmed) return;
     try {
-      await fetch(`http://127.0.0.1:8000/categories/${id}`, {
+      await fetch(`https://tabstash-api.onrender.com/categories/${id}`, {
         method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
       });
       if (currentCategoryId === id) {
@@ -642,8 +642,8 @@
   async function fetchTabs() {
     try {
       const url = currentCategoryId
-        ? `http://127.0.0.1:8000/tabs?category_id=${currentCategoryId}`
-        : `http://127.0.0.1:8000/tabs`;
+        ? `https://tabstash-api.onrender.com/tabs?category_id=${currentCategoryId}`
+        : `https://tabstash-api.onrender.com/tabs`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       renderTabs(data.tabs);
@@ -726,7 +726,7 @@
         );
         if (!confirmed) return;
         try {
-          const res = await fetch(`http://127.0.0.1:8000/tabs/${tab.id}`, {
+          const res = await fetch(`https://tabstash-api.onrender.com/tabs/${tab.id}`, {
             method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
           });
           if (res.ok) fetchTabs();
@@ -751,8 +751,8 @@
     if (!confirmed) return;
     try {
       const url = currentCategoryId
-        ? `http://127.0.0.1:8000/tabs?category_id=${currentCategoryId}`
-        : `http://127.0.0.1:8000/tabs`;
+        ? `https://tabstash-api.onrender.com/tabs?category_id=${currentCategoryId}`
+        : `https://tabstash-api.onrender.com/tabs`;
       const res = await fetch(url, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) fetchTabs();
     } catch (e) { console.error('clearStash', e); }
@@ -777,7 +777,7 @@
       const payload = { url: urlInput.value };
       if (folderSelect.value) payload.category_id = parseInt(folderSelect.value);
 
-      const res = await fetch('http://127.0.0.1:8000/tabs', {
+      const res = await fetch('https://tabstash-api.onrender.com/tabs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload)
