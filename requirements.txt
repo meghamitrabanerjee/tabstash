@@ -3,4 +3,5 @@ uvicorn
 httpx
 beautifulsoup4
 PyJWT
-passlib[bcrypt]
+passlib
+bcrypt==3.2.0
