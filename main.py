@@ -9,7 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware 
 from pydantic import BaseModel, field_validator
 from passlib.context import CryptContext
-from typing import Optional # NEW: Allows tabs to exist without a category
+from typing import Optional
 
 app = FastAPI()
 DB_FILE = "tabstash.db"
@@ -27,7 +27,7 @@ app.add_middleware(
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = "xyz-tabstash-super-secret-key-123"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 120 # Increased session time
+ACCESS_TOKEN_EXPIRE_MINUTES = 120 
 
 security = HTTPBearer() 
 
@@ -61,7 +61,6 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 # ==========================================
 def init_db():
     conn = sqlite3.connect(DB_FILE)
-    # This line tells SQLite to strictly enforce our relational links
     conn.execute("PRAGMA foreign_keys = ON") 
     cursor = conn.cursor()
     
@@ -74,7 +73,6 @@ def init_db():
         )
     """)
     
-    # NEW: Categories Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS categories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,7 +82,6 @@ def init_db():
         )
     """)
 
-    # UPDATED: Tabs Table now links to Categories
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tabs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +94,6 @@ def init_db():
             FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE CASCADE
         )
     """)
-    # 'ON DELETE CASCADE' is magic: If you delete a folder, it auto-deletes all tabs inside it!
 
     conn.commit()
     conn.close()
@@ -123,7 +119,7 @@ async def fetch_link_data(url: str):
             image_url = og_image["content"]
             
         if not image_url:
-            image_url = "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" # Better default image
+            image_url = "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
             
         return {"title": title.strip(), "image_url": image_url}
         
@@ -151,11 +147,9 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
-# NEW: Blueprint for creating a Category
 class CategoryCreate(BaseModel):
     name: str
 
-# UPDATED: Tabs now accept an optional category_id
 class TabCreate(BaseModel):
     url: str
     category_id: Optional[int] = None 
@@ -165,7 +159,9 @@ class TabCreate(BaseModel):
 # ==========================================
 @app.post("/register")
 def register_user(user: UserCreate):
-    hashed_pw = get_password_hash(user.password)
+    # FIX: Truncate password to 72 bytes before hashing to prevent bcrypt crashes
+    hashed_pw = get_password_hash(user.password[:72])
+    
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     try:
@@ -186,14 +182,15 @@ def login_user(credentials: UserLogin):
     user_record = cursor.fetchone()
     conn.close()
 
-    if not user_record or not verify_password(credentials.password, user_record[2]):
+    # FIX: Truncate password to 72 bytes before verifying to prevent bcrypt crashes
+    if not user_record or not verify_password(credentials.password[:72], user_record[2]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     token = create_access_token(data={"user_id": user_record[0], "display_name": user_record[1]})
     return {"access_token": token, "token_type": "bearer", "display_name": user_record[1]}
 
 # ==========================================
-# CATEGORY ROUTES (NEW)
+# CATEGORY ROUTES
 # ==========================================
 @app.post("/categories")
 def create_category(category: CategoryCreate, user_id: int = Depends(get_current_user)):
@@ -217,7 +214,7 @@ def get_categories(user_id: int = Depends(get_current_user)):
 @app.delete("/categories/{cat_id}")
 def delete_category(cat_id: int, user_id: int = Depends(get_current_user)):
     conn = sqlite3.connect(DB_FILE)
-    conn.execute("PRAGMA foreign_keys = ON") # Enforce cascade delete
+    conn.execute("PRAGMA foreign_keys = ON") 
     cursor = conn.cursor()
     cursor.execute("DELETE FROM categories WHERE id = ? AND user_id = ?", (cat_id, user_id))
     conn.commit()
@@ -225,7 +222,7 @@ def delete_category(cat_id: int, user_id: int = Depends(get_current_user)):
     return {"message": "Folder and all its tabs deleted"}
 
 # ==========================================
-# TAB ROUTES (UPDATED)
+# TAB ROUTES
 # ==========================================
 @app.post("/tabs")
 async def create_tab(tab: TabCreate, user_id: int = Depends(get_current_user)):
@@ -240,17 +237,14 @@ async def create_tab(tab: TabCreate, user_id: int = Depends(get_current_user)):
     conn.close()
     return {"message": "Tab stashed!"}
 
-# UPDATED: Now supports filtering by category!
 @app.get("/tabs")
 def get_tabs(category_id: Optional[int] = None, user_id: int = Depends(get_current_user)):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
     if category_id:
-        # Get tabs ONLY for this folder
         cursor.execute("SELECT id, url, title, image_url FROM tabs WHERE user_id = ? AND category_id = ? ORDER BY id DESC", (user_id, category_id))
     else:
-        # Get ALL tabs
         cursor.execute("SELECT id, url, title, image_url FROM tabs WHERE user_id = ? ORDER BY id DESC", (user_id,))
         
     rows = cursor.fetchall()
@@ -274,10 +268,8 @@ def clear_stash(category_id: Optional[int] = None, user_id: int = Depends(get_cu
     cursor = conn.cursor()
     
     if category_id:
-        # User clicked Clear inside a specific folder
         cursor.execute("DELETE FROM tabs WHERE user_id = ? AND category_id = ?", (user_id, category_id))
     else:
-        # User clicked Clear in "All Tabs" (Nukes everything)
         cursor.execute("DELETE FROM tabs WHERE user_id = ?", (user_id,))
         
     conn.commit()
