@@ -54,6 +54,11 @@
       border-radius: var(--r-sm);
     }
 
+    /* ══════════ MOBILE TOPBAR (hidden on desktop) ══════════ */
+    .mobile-topbar {
+      display: none;
+    }
+
     /* ══════════ LEFT PANEL ══════════ */
     .left {
       background: var(--ink);
@@ -120,7 +125,6 @@
       max-width: 300px; margin-bottom: 2.75rem;
     }
 
-    /* Feature checklist */
     .feature-list { display: flex; flex-direction: column; gap: 0.8rem; }
     .feature-item { display: flex; align-items: center; gap: 10px; }
     .feature-check {
@@ -252,12 +256,6 @@
       border: 1px solid #FECDD3;
     }
 
-    @media (max-width: 760px) {
-      body { grid-template-columns: 1fr; }
-      .left { display: none; }
-      .right { background: var(--bg); padding: 3rem 1.5rem; }
-    }
-
     .pw-toggle {
       position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
       background: none; border: none; cursor: pointer;
@@ -266,9 +264,70 @@
     }
     .pw-toggle:hover { color: var(--ink-2); }
     .pw-toggle svg { width: 18px; height: 18px; }
+
+    /* ══════════ RESPONSIVE ══════════ */
+    @media (max-width: 760px) {
+      body {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      .left { display: none; }
+      .right {
+        background: var(--bg);
+        padding: 2.5rem 1.5rem;
+        justify-content: flex-start;
+        padding-top: 2.5rem;
+      }
+
+      /* Show mobile topbar */
+      .mobile-topbar {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        background: var(--white);
+        border-bottom: 1px solid var(--bg-3);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        grid-column: 1;
+      }
+      .mobile-topbar a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+      }
+      .mobile-topbar-mark {
+        width: 32px; height: 32px;
+        background: var(--ink);
+        border-radius: var(--r-sm);
+        display: flex; align-items: center; justify-content: center;
+        transition: background 0.2s;
+      }
+      .mobile-topbar a:hover .mobile-topbar-mark { background: var(--accent); }
+      .mobile-topbar-mark svg { width: 16px; height: 16px; color: #fff; }
+      .mobile-topbar span {
+        font-family: var(--ff-display);
+        font-size: 1.1rem;
+        color: var(--ink);
+        letter-spacing: -0.01em;
+      }
+    }
   </style>
 </head>
 <body>
+
+  <!-- MOBILE TOPBAR (visible only on mobile) -->
+  <div class="mobile-topbar">
+    <a href="index.html">
+      <div class="mobile-topbar-mark">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+        </svg>
+      </div>
+      <span>TabStash</span>
+    </a>
+  </div>
 
   <!-- LEFT PANEL -->
   <div class="left">
@@ -384,7 +443,7 @@
     </div>
   </div>
 
-<script>
+  <script>
     // Password toggle for Register
     document.getElementById('regPwToggle').addEventListener('click', () => {
       const input = document.getElementById('regPassword');
@@ -397,6 +456,7 @@
         icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
       }
     });
+
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name     = document.getElementById('regName').value.trim();
@@ -405,11 +465,10 @@
       const msgEl    = document.getElementById('regMessage');
       const btn      = document.getElementById('regSubmitBtn');
 
-      // --- THE BOUNCER: Check for empty fields first ---
       if (!name || !username || !password) {
         msgEl.textContent = 'Please fill out all fields before submitting.';
         msgEl.className = 'error';
-        return; // This stops the code right here so it doesn't talk to Python
+        return;
       }
 
       btn.textContent = 'Creating account…';

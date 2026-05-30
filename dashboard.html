@@ -69,15 +69,27 @@
     .logo:hover .logo-mark { background: var(--accent); }
     .logo-mark svg { width: 16px; height: 16px; color: var(--white); }
     .logo-name { font-family: var(--ff-display); font-size: 1.2rem; color: var(--ink); letter-spacing: -0.01em; }
-    .nav-right { display: flex; align-items: center; gap: 0.75rem; }
-    .nav-welcome { font-size: 0.8rem; color: var(--ink-3); }
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+    .nav-welcome {
+      font-size: 0.8rem; color: var(--ink-3);
+      /* FIX: truncate long display names so logout button never gets pushed off */
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 160px;
+    }
     .btn-danger {
       font-family: var(--ff-body); font-size: 0.825rem; font-weight: 500;
       color: #fff; background: var(--accent-2); border: none;
       padding: 0.45rem 1rem; border-radius: var(--r-pill);
       cursor: pointer; transition: opacity 0.2s;
+      white-space: nowrap; flex-shrink: 0;
     }
     .btn-danger:hover { opacity: 0.85; }
+
+    /* FIX: on very small screens hide the greeting to keep logout always visible */
+    @media (max-width: 400px) {
+      .nav-welcome { display: none; }
+      .nav-inner { padding: 0 1rem; }
+    }
 
     /* ══ LAYOUT ══ */
     .page-layout {
@@ -108,10 +120,8 @@
     .folder-list { list-style: none; padding: 0.5rem; }
     .folder-divider { height: 1px; background: var(--bg-3); margin: 0.25rem 0.75rem; }
 
-    /* ── folder item: wraps button so hover CSS works cleanly ── */
     .folder-item { position: relative; }
 
-    /* shared row style — used for both All Tabs button and folder divs */
     .folder-row {
       width: 100%; display: flex; align-items: center; justify-content: space-between;
       gap: 8px; padding: 0.55rem 0.75rem;
@@ -119,7 +129,6 @@
       font-family: var(--ff-body); font-size: 0.825rem; font-weight: 400;
       color: var(--ink-3); background: none; border: none; cursor: pointer;
       text-align: left; transition: background 0.15s, color 0.15s;
-      /* FIX: removed inline onclick — all events wired in JS */
     }
     .folder-row:hover { background: var(--bg-2); color: var(--ink); }
     .folder-row.active { background: var(--accent-dim); color: var(--accent); font-weight: 500; }
@@ -128,7 +137,6 @@
     .folder-left span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .folder-icon { width: 14px; height: 14px; flex-shrink: 0; }
 
-    /* FIX: hover-reveal delete — scoped to .folder-item hover so it works on the div too */
     .folder-del {
       background: none; border: none; cursor: pointer;
       color: var(--ink-4); padding: 3px; border-radius: 4px;
@@ -138,9 +146,10 @@
     .folder-del svg { width: 13px; height: 13px; }
     .folder-item:hover .folder-del { opacity: 1; }
     .folder-del:hover { color: var(--accent-2); }
-    /* FIX: delete button visible on active (blue) row */
     .folder-row.active .folder-del { color: var(--accent); }
     .folder-row.active .folder-del:hover { color: var(--accent-2); }
+    /* FIX: always show folder delete on touch devices */
+    @media (hover: none) { .folder-del { opacity: 0.6; } }
 
     /* ── add-folder form ── */
     .add-folder-form {
@@ -148,7 +157,7 @@
       display: flex; flex-direction: row; align-items: center; gap: 8px;
     }
     .add-folder-input {
-      flex: 1; min-width: 0; /* min-width:0 prevents flex overflow */
+      flex: 1; min-width: 0;
       font-family: var(--ff-body); font-size: 0.8rem; color: var(--ink);
       background: var(--bg-2); border: 1px solid var(--bg-3);
       border-radius: var(--r-md); padding: 0 0.75rem;
@@ -171,9 +180,11 @@
     .stash-bar {
       background: var(--white); border: 1px solid var(--bg-3);
       border-radius: var(--r-xl); padding: 0.75rem;
-      margin-bottom: 0.75rem; box-shadow: var(--shadow-sm); /* FIX: reduced bottom margin, status msg sits below */
+      margin-bottom: 0.75rem; box-shadow: var(--shadow-sm);
     }
-    .stash-inputs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .stash-inputs {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
     .stash-url-input {
       flex: 1; min-width: 180px;
       font-family: var(--ff-body); font-size: 0.875rem; color: var(--ink);
@@ -199,11 +210,20 @@
     .stash-btn:hover { background: var(--accent); }
     .stash-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* FIX: status message lives outside the white card so it doesn't add phantom height */
+    /* FIX: on mobile, stack URL input full-width on its own row,
+       then folder select + button side by side below it */
+    @media (max-width: 600px) {
+      .stash-inputs { flex-wrap: wrap; }
+      .stash-url-input { width: 100%; flex: none; min-width: 0; }
+      .folder-select { flex: 1; min-width: 0; }
+      .stash-btn { flex-shrink: 0; }
+    }
+
+    /* ══ STATUS MSG ══ */
     .status-msg {
       font-size: 0.78rem; font-weight: 500;
       padding: 0.35rem 0.25rem;
-      min-height: 1.5rem; /* keeps layout stable without pushing card height */
+      min-height: 1.5rem;
       margin-bottom: 1.25rem;
     }
     .status-msg.ok  { color: var(--success); }
@@ -250,11 +270,10 @@
     .tab-thumb {
       height: 130px; overflow: hidden;
       background: var(--bg-2); border-bottom: 1px solid var(--bg-3);
-      /* FIX: removed pointer-events:none — was causing hover propagation bugs in Firefox */
     }
     .tab-thumb img {
       width: 100%; height: 100%; object-fit: cover; display: block;
-      transition: transform 0.4s ease; pointer-events: none; /* only img is non-interactive, not the container */
+      transition: transform 0.4s ease; pointer-events: none;
     }
     .tab-card:hover .tab-thumb img { transform: scale(1.04); }
     .tab-thumb-fallback {
@@ -280,7 +299,6 @@
       width: 28px; height: 28px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       color: var(--ink-3);
-      /* FIX: always visible on mobile (no hover state), fades on desktop */
       opacity: 0;
       transition: opacity 0.2s, background 0.2s, color 0.2s;
       backdrop-filter: blur(4px); box-shadow: var(--shadow-sm);
@@ -288,7 +306,6 @@
     .tab-del svg { width: 13px; height: 13px; pointer-events: none; }
     .tab-card:hover .tab-del { opacity: 1; }
     .tab-del:hover { background: var(--accent-2); color: #fff; }
-    /* FIX: always show delete on touch devices */
     @media (hover: none) { .tab-del { opacity: 0.7; } }
 
     /* ── empty state ── */
@@ -403,7 +420,6 @@
         </div>
       </form>
     </div>
-    <!-- FIX: status msg lives outside white card so it doesn't push card height -->
     <div class="status-msg" id="statusMsg" aria-live="polite"></div>
 
     <!-- View header -->
@@ -478,7 +494,6 @@
       const cancelBtn  = document.getElementById('modalCancel');
       const confirmBtn = document.getElementById('modalConfirm');
 
-      // FIX: set both title and message for context
       titleEl.textContent = title;
       msgEl.textContent   = message;
       overlay.classList.add('show');
@@ -487,13 +502,11 @@
         overlay.classList.remove('show');
         cancelBtn.removeEventListener('click', onCancel);
         confirmBtn.removeEventListener('click', onConfirm);
-        // FIX: also close on overlay click (backdrop dismiss)
         overlay.removeEventListener('click', onBackdrop);
         resolve(result);
       };
       const onCancel   = () => cleanup(false);
       const onConfirm  = () => cleanup(true);
-      // FIX: clicking outside the card dismisses (= cancel)
       const onBackdrop = e => { if (e.target === overlay) cleanup(false); };
 
       cancelBtn.addEventListener('click', onCancel);
@@ -547,17 +560,12 @@
     const list = document.getElementById('folderList');
     list.innerHTML = html;
 
-    /* ── FIX: wire ALL folder interactions via JS — zero inline onclick ── */
-
-    // "All tabs" button
     list.querySelector('[data-id="all"]').addEventListener('click', () => {
       selectCategory(null, 'All tabs');
     });
 
-    // Individual folder rows — click the row to navigate, but NOT if the delete btn was clicked
     list.querySelectorAll('.folder-row[data-id]:not([data-id="all"])').forEach(row => {
       row.addEventListener('click', e => {
-        // FIX: if the click landed on or inside the delete button, do nothing
         if (e.target.closest('.folder-del')) return;
         const id = parseInt(row.dataset.id);
         const name = row.querySelector('.folder-left span').textContent;
@@ -565,7 +573,6 @@
       });
     });
 
-    // Delete buttons — stopPropagation so the row click above never fires
     list.querySelectorAll('.folder-del').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
@@ -576,14 +583,12 @@
 
   function renderFolderDropdown() {
     const sel = document.getElementById('folderSelect');
-    // FIX: preserve current selection when re-rendering
     const prevVal = sel.value;
     let html = `<option value="">No folder</option>`;
     categoriesList.forEach(cat => {
       html += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
     });
     sel.innerHTML = html;
-    // Restore previous selection if still valid, else default to current folder
     if (currentCategoryId && categoriesList.find(c => c.id === currentCategoryId)) {
       sel.value = String(currentCategoryId);
     } else if (prevVal && categoriesList.find(c => String(c.id) === prevVal)) {
@@ -631,7 +636,7 @@
         await selectCategory(null, 'All tabs');
       } else {
         await fetchCategories();
-        await fetchTabs(); // FIX: refresh grid to remove ghost tabs
+        await fetchTabs();
       }
     } catch (e) { console.error('deleteCategory', e); }
   }
@@ -685,7 +690,6 @@
       card.className = 'tab-card';
       card.style.animationDelay = `${i * 35}ms`;
 
-      // FIX: safe card click — guard against clicks on delete button
       card.addEventListener('click', e => {
         if (e.target.closest('.tab-del')) return;
         window.open(tab.url, '_blank');
@@ -709,7 +713,6 @@
           <div class="tab-title">${escapeHtml(tab.title || 'Untitled')}</div>
         </div>`;
 
-      // FIX: image error fallback without inline onerror (avoids quote escaping bugs)
       if (tab.image_url) {
         const img = card.querySelector('img');
         img.addEventListener('error', () => {
@@ -717,7 +720,6 @@
         });
       }
 
-      // FIX: delete wired via JS with stopPropagation
       card.querySelector('.tab-del').addEventListener('click', async e => {
         e.stopPropagation();
         const confirmed = await customConfirm(
@@ -738,7 +740,7 @@
   }
 
   /* ══════════════════════════════════════
-     CLEAR STASH — context-aware
+     CLEAR STASH
   ══════════════════════════════════════ */
   document.getElementById('clearBtn').addEventListener('click', async () => {
     const isFolder = !!currentCategoryId;
@@ -787,7 +789,6 @@
         urlInput.value = '';
         status.textContent = '✓ Stashed successfully';
         status.className = 'status-msg ok';
-        // FIX: if the user stashed into a folder they're not currently viewing, switch to it
         if (folderSelect.value && parseInt(folderSelect.value) !== currentCategoryId) {
           const cat = categoriesList.find(c => c.id === parseInt(folderSelect.value));
           if (cat) await selectCategory(cat.id, cat.name);

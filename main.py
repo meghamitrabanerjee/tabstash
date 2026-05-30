@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import re
 import httpx 
@@ -25,7 +26,7 @@ app.add_middleware(
 # SECURITY & JWT CONFIGURATION
 # ==========================================
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = "xyz-tabstash-super-secret-key-123"
+SECRET_KEY = os.getenv("SECRET_KEY", "YOUR-OWN-SECRET-KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 120 
 
