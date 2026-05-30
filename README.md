@@ -4,6 +4,12 @@
 
 TabStash is a full-stack, decoupled web application designed to act as an encrypted intelligence vault for browser tabs. Paste a messy URL, and the Python backend instantly visits the site, scrapes the OpenGraph metadata, and securely stashes it in a relational database for later viewing.
 
+## 🌐 Live Demo
+
+**[https://tabstash.vercel.app/]**
+
+> *Note: The API is hosted on a free Render instance. The database resets occasionally due to ephemeral storage, so feel free to create a test account!*
+
 ## 🚀 Tech Stack
 
 **Backend:** Python, FastAPI, SQLite, Passlib (Bcrypt), JWT Auth, BeautifulSoup4, httpx
@@ -31,13 +37,13 @@ The backend architecture, database schema, API routing, and security protocols w
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/tabstash.git
+git clone [https://github.com/yourusername/tabstash.git](https://github.com/yourusername/tabstash.git)
 cd tabstash
 ```
 
 2. **Install Python dependencies**
 ```bash
-pip install fastapi uvicorn httpx beautifulsoup4 pyjwt passlib[bcrypt]
+pip install fastapi uvicorn httpx beautifulsoup4 pyjwt passlib bcrypt==3.2.0
 ```
 
 3. **Start the FastAPI Server**
